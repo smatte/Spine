@@ -151,7 +151,15 @@ public class JSONAPIRouter: Router {
 	*/
 	public func queryItemForFilter(filter: NSComparisonPredicate) -> NSURLQueryItem {
 		assert(filter.predicateOperatorType == .EqualToPredicateOperatorType, "The built in router only supports Query filter expressions of type 'equalTo'")
-		return NSURLQueryItem(name: "filter[\(filter.leftExpression.keyPath)]", value: "\(filter.rightExpression.constantValue!)")
+        let stringValue: String
+        if let valueArray = filter.rightExpression.constantValue as? [AnyObject] {
+            stringValue = valueArray.map { "\($0)" }.joinWithSeparator(",")
+        } else if let value = filter.rightExpression.constantValue {
+            stringValue = "\(value)"
+        } else {
+            stringValue = "null"
+        }
+        return NSURLQueryItem(name: "filter[\(filter.leftExpression.keyPath)]", value: stringValue)
 	}
 
 	/**
