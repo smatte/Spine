@@ -47,7 +47,7 @@ public class Resource: NSObject, NSCoding {
 	final public var resourceType: ResourceType { return self.dynamicType.resourceType }
 	
 	public class var fields: [Field] { return [] }
-	final public var fields: [Field] { return self.dynamicType.fields }
+    final public var fields: [Field] { return self.dynamicType.fields }
 	
 	public var id: String?
 	public var URL: NSURL?
@@ -86,7 +86,17 @@ public class Resource: NSObject, NSCoding {
 		}
 		
 		isLoaded = false
-	}
+    }
+
+    public func PathForOperation(operation: NSOperation) -> String? {
+        return nil
+    }
+
+    public func URLForOperation(operation: NSOperation, router: Router) -> NSURL? {
+        guard let path = PathForOperation(operation) else { return nil }
+
+        return router.baseURL.URLByAppendingPathComponent(path)
+    }
 }
 
 extension Resource {

@@ -56,7 +56,7 @@ Operating against a Spine
 =========================
 The `Spine` instance variable references the Spine against which to operate.
 */
-class ConcurrentOperation: NSOperation {
+public class ConcurrentOperation: NSOperation {
 	enum State: String {
 		case Ready = "isReady"
 		case Executing = "isExecuting"
@@ -74,16 +74,16 @@ class ConcurrentOperation: NSOperation {
 			didChangeValueForKey(state.rawValue)
 		}
 	}
-	override var ready: Bool {
+	override public var ready: Bool {
 		return super.ready && state == .Ready
 	}
-	override var executing: Bool {
+	override public var executing: Bool {
 		return state == .Executing
 	}
-	override var finished: Bool {
+	override public var finished: Bool {
 		return state == .Finished
 	}
-	override var asynchronous: Bool {
+	override public var asynchronous: Bool {
 		return true
 	}
 	
@@ -103,7 +103,7 @@ class ConcurrentOperation: NSOperation {
 	
 	override init() {}
 	
-	final override func start() {
+	final override public func start() {
 		if self.cancelled {
 			state = .Finished
 		} else {
@@ -112,7 +112,7 @@ class ConcurrentOperation: NSOperation {
 		}
 	}
 	
-	final override func main() {
+	final override public func main() {
 		execute()
 	}
 	
@@ -176,7 +176,7 @@ class FetchOperation<T: Resource>: ConcurrentOperation {
 /**
 A DeleteOperation deletes a resource from a Spine.
 */
-class DeleteOperation: ConcurrentOperation {
+public class DeleteOperation: ConcurrentOperation {
 	/// The resource to delete.
 	let resource: Resource
 	
@@ -190,7 +190,7 @@ class DeleteOperation: ConcurrentOperation {
 	}
 	
 	override func execute() {
-		let URL = spine.router.URLForQuery(Query(resource: resource))
+		let URL = resource.URLForOperation(self, router: router) ?? spine.router.URLForQuery(Query(resource: resource))
 		
 		Spine.logInfo(.Spine, "Deleting resource \(resource) using URL: \(URL)")
 		
@@ -222,7 +222,7 @@ class DeleteOperation: ConcurrentOperation {
 A SaveOperation saves a resources in a Spine. It can be used to either update an existing resource,
 or to insert new resources.
 */
-class SaveOperation: ConcurrentOperation {
+public class SaveOperation: ConcurrentOperation {
 	/// The resource to save.
 	let resource: Resource
 	
@@ -230,7 +230,7 @@ class SaveOperation: ConcurrentOperation {
 	var result: Failable<Void>?
 	
 	/// Whether the resource is a new resource, or an existing resource.
-	private let isNewResource: Bool
+	public let isNewResource: Bool
 	
 	private let relationshipOperationQueue = NSOperationQueue()
 	
@@ -246,11 +246,11 @@ class SaveOperation: ConcurrentOperation {
 		let URL: NSURL, method: String, payload: NSData
 
 		if isNewResource {
-			URL = router.URLForResourceType(resource.resourceType)
+			URL = resource.URLForOperation(self, router: router) ?? router.URLForResourceType(resource.resourceType)
 			method = "POST"
 			payload = serializer.serializeResources([resource], options: SerializationOptions(includeID: false, dirtyFieldsOnly: false, includeToOne: true, includeToMany: true))
 		} else {
-			URL = router.URLForQuery(Query(resource: resource))
+			URL = resource.URLForOperation(self, router: router) ?? router.URLForQuery(Query(resource: resource))
 			method = "PATCH"
 			payload = serializer.serializeResources([resource])
 		}
@@ -338,7 +338,7 @@ class SaveOperation: ConcurrentOperation {
 		}
 	}
 	
-	override func observeValueForKeyPath(keyPath: String?, ofObject object: AnyObject?, change: [String : AnyObject]?, context: UnsafeMutablePointer<Void>) {
+	override public func observeValueForKeyPath(keyPath: String?, ofObject object: AnyObject?, change: [String : AnyObject]?, context: UnsafeMutablePointer<Void>) {
 		guard let path = keyPath, queue = object as? NSOperationQueue where path == "operations" && queue == relationshipOperationQueue else {
 			super.observeValueForKeyPath(keyPath, ofObject: object, change: change, context: context)
 			return
