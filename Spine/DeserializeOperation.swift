@@ -103,8 +103,8 @@ class DeserializeOperation: NSOperation {
 		extractedErrors = self.data["errors"].array?.map { error -> NSError in
 			let code = error["code"].intValue
 			var userInfo = error.dictionaryObject
-			if let title = error["title"].string {
-				userInfo = [NSLocalizedDescriptionKey: title]
+			if let pointer = error["source"].dictionary?["pointer"]?.string, let title = error["title"].string {
+				userInfo = ["pointer": pointer, NSLocalizedDescriptionKey: title]
 			}
 			
 			return NSError(domain: SpineServerErrorDomain, code: code, userInfo: userInfo)
